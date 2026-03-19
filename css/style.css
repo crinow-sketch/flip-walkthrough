@@ -16,7 +16,7 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
 
-html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
   background: var(--gray);
@@ -417,6 +417,101 @@ body {
 }
 .deal-row.profit.negative { background: #fce4ec; color: var(--red); }
 .deal-row .val { font-weight: 600; }
+
+/* ── QUICK-KEEP BUTTON ── */
+.cat-header .quick-keep {
+  background: none;
+  border: 1.5px solid var(--green-dk);
+  color: var(--green-dk);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto;
+  margin-right: 8px;
+  min-height: 32px;
+}
+.cat-header .quick-keep:active { background: var(--green); }
+.cat-card.open .quick-keep { display: none; }
+.cat-header.has-action .quick-keep,
+.cat-header.keep-action .quick-keep { display: none; }
+
+/* ── NEXT ROOM BANNER ── */
+.next-room-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--blue);
+  color: #fff;
+  padding: 18px;
+  border-radius: var(--radius);
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+.next-room-banner:active { background: var(--navy); }
+.next-room-banner.summary-banner { background: var(--green-dk); }
+.next-room-banner.summary-banner:active { background: #3d6127; }
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47,84,150,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(47,84,150,0); }
+}
+
+/* ── CARD HIGHLIGHT ANIMATION ── */
+.cat-card.just-opened {
+  animation: card-highlight 0.6s ease-out;
+}
+@keyframes card-highlight {
+  0% { box-shadow: 0 0 0 3px rgba(47,84,150,0.4); }
+  100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+}
+
+/* ── ROOM PILL PROGRESS ── */
+.room-pill .pill-check {
+  display: inline-block;
+  font-size: 11px;
+  margin-left: 2px;
+}
+.room-pill .pill-progress {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+.room-pill.active .pill-progress { opacity: 0.85; }
+
+/* ── INLINE TIER TOGGLE (Walk Screen) ── */
+.walk-tier-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  background: var(--light-blue);
+  border-radius: 8px;
+  padding: 2px;
+  margin-bottom: 8px;
+}
+.walk-tier-toggle button {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-light);
+  cursor: pointer;
+}
+.walk-tier-toggle button.active {
+  background: var(--navy);
+  color: #fff;
+}
 
 /* ── RESPONSIVE ── */
 @media (min-width: 768px) {

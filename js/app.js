@@ -176,6 +176,7 @@ function setTier(tier) {
 // ── WALKTHROUGH RENDERING ──
 function renderWalkthrough() {
   if (!currentProperty) return;
+  renderWalkTierToggle();
   renderRoomPills();
   renderRoom(currentRoomIdx);
   updateGrandTotal();
@@ -185,15 +186,28 @@ function renderRoomPills() {
   const pills = document.getElementById('roomPills');
   pills.innerHTML = ROOMS.map((r, i) => {
     const cost = calcRoomTotal(currentProperty, r.name);
+    const progress = getRoomProgress(r, currentProperty.rooms[r.name]);
+    const isDone = progress.done === progress.total;
     return `<button class="room-pill ${i === currentRoomIdx ? 'active' : ''}" onclick="selectRoom(${i})">
-      ${r.name}
-      ${cost > 0 ? `<span class="pill-cost">${fmtMoney(cost)}</span>` : ''}
+      ${r.name}${isDone ? ' <span class="pill-check">&#10003;</span>' : ''}
+      ${cost > 0 ? `<span class="pill-cost">${fmtMoney(cost)}</span>` :
+        (progress.done > 0 ? `<span class="pill-progress">${progress.done}/${progress.total}</span>` : '')}
     </button>`;
   }).join('');
 
-  // Auto-scroll active pill into view
   const active = pills.querySelector('.active');
   if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+function getRoomProgress(roomDef, rData) {
+  let done = 0;
+  const total = roomDef.categories.length;
+  if (!rData || !rData.items) return { done: 0, total };
+  roomDef.categories.forEach(catDef => {
+    const item = rData.items[catDef.cat];
+    if (item && item.action && item.action !== '') done++;
+  });
+  return { done, total };
 }
 
 function selectRoom(idx) {
@@ -236,6 +250,12 @@ function renderRoom(idx) {
     </div>`;
   }
 
+  // Find first unanswered category index (for smart-open)
+  const firstUnansweredIdx = room.categories.findIndex(catDef => {
+    const item = (rData.items && rData.items[catDef.cat]) || {};
+    return !item.action || item.action === '';
+  });
+
   // Category cards
   room.categories.forEach((catDef, ci) => {
     const item = (rData.items && rData.items[catDef.cat]) || {};
@@ -255,10 +275,13 @@ function renderRoom(idx) {
     const totalCost = qty * unitCost;
 
     const labels = dimLabels(catDef.calc);
+    const isOpen = ci === firstUnansweredIdx;
+    const escapedCat = catDef.cat.replace(/'/g, "\\'");
 
-    html += `<div class="cat-card ${ci === 0 ? 'open' : ''}" data-cat="${catDef.cat}">
+    html += `<div class="cat-card ${isOpen ? 'open' : ''}" data-cat="${catDef.cat}" data-idx="${ci}">
       <div class="cat-header ${hasAction ? 'has-action' : ''} ${isKeep ? 'keep-action' : ''}" onclick="toggleCard(this)">
         <span class="cat-name">${catDef.cat}</span>
+        <button class="quick-keep" onclick="event.stopPropagation();quickKeep('${escapedCat}')">Keep &#10003;</button>
         <span class="cat-cost">${totalCost > 0 ? fmtMoney(totalCost) : (isKeep ? 'Keep' : '')}</span>
       </div>
       <div class="cat-body">
@@ -313,11 +336,60 @@ function renderRoom(idx) {
     <span class="amount">${fmtMoney(roomTotal)}</span>
   </div>`;
 
+  // Next Room banner (when all categories answered)
+  const progress = getRoomProgress(room, rData);
+  if (progress.done === progress.total) {
+    if (currentRoomIdx < ROOMS.length - 1) {
+      const nextRoom = ROOMS[currentRoomIdx + 1];
+      html += `<div class="next-room-banner" onclick="advanceToNextRoom()">Next: ${nextRoom.name} &#8594;</div>`;
+    } else {
+      html += `<div class="next-room-banner summary-banner" onclick="showTab('summary')">View Summary &#8594;</div>`;
+    }
+  }
+
   container.innerHTML = html;
 }
 
 function toggleCard(header) {
   header.closest('.cat-card').classList.toggle('open');
+}
+
+function quickKeep(catName) {
+  if (!currentProperty) return;
+  const room = ROOMS[currentRoomIdx];
+  const rData = currentProperty.rooms[room.name];
+  if (!rData.items[catName]) rData.items[catName] = {};
+  rData.items[catName].action = 'Keep';
+
+  renderRoom(currentRoomIdx);
+  renderRoomPills();
+  updateGrandTotal();
+  scheduleAutoSave();
+  scrollToOpenCard();
+}
+
+function scrollToOpenCard() {
+  setTimeout(() => {
+    const openCard = document.querySelector('#roomContent .cat-card.open');
+    if (openCard) {
+      openCard.classList.add('just-opened');
+      openCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => openCard.classList.remove('just-opened'), 600);
+    } else {
+      const banner = document.querySelector('.next-room-banner');
+      if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 50);
+}
+
+function advanceToNextRoom() {
+  if (currentRoomIdx < ROOMS.length - 1) {
+    saveCurrentRoom();
+    currentRoomIdx++;
+    renderRoomPills();
+    renderRoom(currentRoomIdx);
+    document.getElementById('roomContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function onRoomDimChange() {
@@ -353,6 +425,11 @@ function onCatChange(el) {
   renderRoomPills();
   updateGrandTotal();
   scheduleAutoSave();
+
+  // Auto-advance when Action is selected
+  if (field === 'action' && el.value !== '') {
+    scrollToOpenCard();
+  }
 }
 
 function saveCurrentRoom() {
@@ -460,6 +537,39 @@ function updateDeal() {
       <span class="val">${fmtMoney(profit)} (${roi.toFixed(1)}% ROI)</span>
     </div>
   `;
+}
+
+// ── WALK SCREEN TIER TOGGLE ──
+function renderWalkTierToggle() {
+  let tierEl = document.getElementById('walkTierToggle');
+  if (!tierEl) {
+    const container = document.getElementById('screen-walkthrough');
+    const pills = document.getElementById('roomPills');
+    tierEl = document.createElement('div');
+    tierEl.id = 'walkTierToggle';
+    tierEl.className = 'walk-tier-toggle';
+    tierEl.innerHTML = `
+      <button data-tier="low" onclick="setWalkTier('low')">Low</button>
+      <button data-tier="mid" onclick="setWalkTier('mid')">Mid</button>
+      <button data-tier="high" onclick="setWalkTier('high')">High</button>
+    `;
+    container.insertBefore(tierEl, pills);
+  }
+  const tier = currentProperty.costTier || 'mid';
+  tierEl.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tier === tier);
+  });
+}
+
+function setWalkTier(tier) {
+  if (!currentProperty) return;
+  currentProperty.costTier = tier;
+  setTier(tier);
+  renderWalkTierToggle();
+  renderRoom(currentRoomIdx);
+  renderRoomPills();
+  updateGrandTotal();
+  autoSave();
 }
 
 // ── AUTO-SAVE ──
