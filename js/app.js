@@ -217,7 +217,7 @@ function selectRoom(idx) {
   renderRoom(idx);
 }
 
-function renderRoom(idx) {
+function renderRoom(idx, keepOpenIdx) {
   const room = ROOMS[idx];
   const rData = currentProperty.rooms[room.name] || { length: 0, width: 0, items: {} };
   const tier = currentProperty.costTier || 'mid';
@@ -275,7 +275,9 @@ function renderRoom(idx) {
     const totalCost = qty * unitCost;
 
     const labels = dimLabels(catDef.calc);
-    const isOpen = ci === firstUnansweredIdx;
+    // If keepOpenIdx is provided (user is editing), keep that card open;
+    // otherwise use smart-open (first unanswered card)
+    const isOpen = (keepOpenIdx !== undefined) ? (ci === keepOpenIdx) : (ci === firstUnansweredIdx);
     const escapedCat = catDef.cat.replace(/'/g, "\\'");
 
     html += `<div class="cat-card ${isOpen ? 'open' : ''}" data-cat="${catDef.cat}" data-idx="${ci}">
@@ -414,6 +416,7 @@ function onCatChange(el) {
   if (!currentProperty) return;
   const card = el.closest('.cat-card');
   const catName = card.dataset.cat;
+  const editingIdx = parseInt(card.dataset.idx);
   const room = ROOMS[currentRoomIdx];
   const rData = currentProperty.rooms[room.name];
   if (!rData.items[catName]) rData.items[catName] = {};
@@ -421,15 +424,29 @@ function onCatChange(el) {
   const field = el.dataset.field;
   rData.items[catName][field] = el.value;
 
-  renderRoom(currentRoomIdx);
+  // Auto-set qty to 1 for qty-based categories when action is selected
+  const catDef = room.categories[editingIdx];
+  if (field === 'action' && el.value !== '' && el.value !== 'Keep') {
+    if (catDef.calc === 'qty') {
+      const item = rData.items[catName];
+      if (!item.dim2 || parseFloat(item.dim2) === 0) {
+        item.dim2 = 1;
+      }
+    }
+  }
+
+  // When Action is selected → auto-advance (let smart-open pick next card)
+  // Otherwise → keep current card open so user can continue editing
+  if (field === 'action' && el.value !== '') {
+    renderRoom(currentRoomIdx);
+    scrollToOpenCard();
+  } else {
+    renderRoom(currentRoomIdx, editingIdx);
+  }
+
   renderRoomPills();
   updateGrandTotal();
   scheduleAutoSave();
-
-  // Auto-advance when Action is selected
-  if (field === 'action' && el.value !== '') {
-    scrollToOpenCard();
-  }
 }
 
 function saveCurrentRoom() {

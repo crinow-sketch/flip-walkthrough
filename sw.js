@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flip-walk-v5';
+const CACHE_NAME = 'flip-walk-v6';
 const ASSETS = [
   './',
   './index.html',
