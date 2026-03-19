@@ -6,10 +6,10 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
       { cat: 'Windows', types: ['Vinyl DH','Casement'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -17,9 +17,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -27,9 +27,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -37,9 +37,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
       { cat: 'Sink Drain', types: ['Standard'], calc: 'qty' },
       { cat: 'Sink Water Lines', types: ['Standard'], calc: 'qty' },
       { cat: 'Kitchen Cabinets', types: ['Stock','Semi-Custom','Custom'], calc: 'linft' },
@@ -51,9 +51,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['LVP','Tile'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
       { cat: 'Sink Drain', types: ['Standard'], calc: 'qty' },
       { cat: 'Sink Water Lines', types: ['Standard'], calc: 'qty' },
       { cat: 'Bathtub', types: ['Standard'], calc: 'qty' },
@@ -67,9 +67,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -77,9 +77,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -87,9 +87,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -97,9 +97,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['LVP','Tile'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
       { cat: 'Sink Drain', types: ['Standard'], calc: 'qty' },
       { cat: 'Sink Water Lines', types: ['Standard'], calc: 'qty' },
       { cat: 'Bathtub', types: ['Standard'], calc: 'qty' },
@@ -112,7 +112,7 @@ const ROOMS = [
       { cat: 'Floors', types: ['LVP','Tile','Carpet','Epoxy'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Drop Ceiling'], calc: 'ceiling' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
       { cat: 'Electrical Panel', types: ['100A','200A','Fuse Convert'], calc: 'qty' },
       { cat: 'Hot water tank', types: ['Tank 40-50','Tankless'], calc: 'qty' },
       { cat: 'Heat', types: ['Furnace','Boiler','Full HVAC'], calc: 'qty' },
@@ -125,9 +125,9 @@ const ROOMS = [
       { cat: 'Floors', types: ['Hardwood','LVP','Tile','Carpet'], calc: 'area' },
       { cat: 'Walls', types: ['Drywall','Plaster'], calc: 'walls' },
       { cat: 'Ceilings', types: ['Drywall','Plaster'], calc: 'ceiling' },
-      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim' },
+      { cat: 'Trim', types: ['Baseboard','Crown','Casing'], calc: 'trim', multiRow: true },
       { cat: 'Doors', types: ['Hollow Core','Solid Core'], calc: 'qty' },
-      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty' },
+      { cat: 'Lights and Devices', types: ['Outlet','GFCI','Light Fixture','Recessed'], calc: 'qty', multiRow: true },
     ]
   },
   {
@@ -181,7 +181,31 @@ function createBlankPropertyData() {
   ROOMS.forEach(r => {
     rooms[r.name] = { length: 0, width: 0, items: {} };
     r.categories.forEach(c => {
-      rooms[r.name].items[c.cat] = { type: '', condition: '', action: '', dim1: 0, dim2: 0 };
+      if (c.multiRow) {
+        rooms[r.name].items[c.cat] = [{ type: '', action: '', dim1: 0, dim2: 0 }];
+      } else {
+        rooms[r.name].items[c.cat] = { type: '', condition: '', action: '', dim1: 0, dim2: 0 };
+      }
+    });
+  });
+  return rooms;
+}
+
+// Migrate old single-object data to arrays for multi-row categories
+function migrateMultiRowData(rooms) {
+  ROOMS.forEach(r => {
+    if (!rooms[r.name] || !rooms[r.name].items) return;
+    r.categories.forEach(c => {
+      if (!c.multiRow) return;
+      const item = rooms[r.name].items[c.cat];
+      if (item && !Array.isArray(item)) {
+        rooms[r.name].items[c.cat] = [{
+          type: item.type || '', action: item.action || '',
+          dim1: item.dim1 || 0, dim2: item.dim2 || 0
+        }];
+      } else if (!item) {
+        rooms[r.name].items[c.cat] = [{ type: '', action: '', dim1: 0, dim2: 0 }];
+      }
     });
   });
   return rooms;

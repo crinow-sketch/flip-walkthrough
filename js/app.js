@@ -110,6 +110,7 @@ function newProperty() {
 async function openProperty(id) {
   currentProperty = await loadProperty(id);
   if (!currentProperty) return;
+  migrateMultiRowData(currentProperty.rooms);
   populatePropertyForm();
   showTab('property');
 }
@@ -205,7 +206,11 @@ function getRoomProgress(roomDef, rData) {
   if (!rData || !rData.items) return { done: 0, total };
   roomDef.categories.forEach(catDef => {
     const item = rData.items[catDef.cat];
-    if (item && item.action && item.action !== '') done++;
+    if (catDef.multiRow) {
+      if (Array.isArray(item) && item.some(row => row.action && row.action !== '')) done++;
+    } else {
+      if (item && item.action && item.action !== '') done++;
+    }
   });
   return { done, total };
 }
@@ -252,83 +257,163 @@ function renderRoom(idx, keepOpenIdx) {
 
   // Find first unanswered category index (for smart-open)
   const firstUnansweredIdx = room.categories.findIndex(catDef => {
+    if (catDef.multiRow) {
+      const rows = Array.isArray(rData.items && rData.items[catDef.cat]) ? rData.items[catDef.cat] : [];
+      return !rows.some(row => row.action && row.action !== '');
+    }
     const item = (rData.items && rData.items[catDef.cat]) || {};
     return !item.action || item.action === '';
   });
 
   // Category cards
   room.categories.forEach((catDef, ci) => {
-    const item = (rData.items && rData.items[catDef.cat]) || {};
-    const hasAction = item.action && item.action !== 'Keep' && item.action !== '';
-    const isKeep = item.action === 'Keep';
-
-    // Calculate cost for this item
-    let qty = 0;
-    if (needsDimensions(catDef.calc)) {
-      qty = calcQty(catDef.calc, rData.length, rData.width, ch);
-    } else if (catDef.calc === 'linft') {
-      qty = parseFloat(item.dim1) || 0;
-    } else {
-      qty = parseFloat(item.dim2) || (parseFloat(item.dim1) || 0);
-    }
-    const unitCost = getCost(catDef.cat, item.type, item.action, tier);
-    const totalCost = qty * unitCost;
-
-    const labels = dimLabels(catDef.calc);
-    // If keepOpenIdx is provided (user is editing), keep that card open;
-    // otherwise use smart-open (first unanswered card)
-    const isOpen = (keepOpenIdx !== undefined) ? (ci === keepOpenIdx) : (ci === firstUnansweredIdx);
     const escapedCat = catDef.cat.replace(/'/g, "\\'");
+    const isOpen = (keepOpenIdx !== undefined) ? (ci === keepOpenIdx) : (ci === firstUnansweredIdx);
 
-    html += `<div class="cat-card ${isOpen ? 'open' : ''}" data-cat="${catDef.cat}" data-idx="${ci}">
-      <div class="cat-header ${hasAction ? 'has-action' : ''} ${isKeep ? 'keep-action' : ''}" onclick="toggleCard(this)">
-        <span class="cat-name">${catDef.cat}</span>
-        <button class="quick-keep" onclick="event.stopPropagation();quickKeep('${escapedCat}')">Keep &#10003;</button>
-        <span class="cat-cost">${totalCost > 0 ? fmtMoney(totalCost) : (isKeep ? 'Keep' : '')}</span>
-      </div>
-      <div class="cat-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Type</label>
-            <select data-field="type" onchange="onCatChange(this)">
-              <option value="">-- Select --</option>
-              ${catDef.types.map(t => `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
-            </select>
+    if (catDef.multiRow) {
+      // ── MULTI-ROW CARD ──
+      const rows = Array.isArray(rData.items[catDef.cat]) ? rData.items[catDef.cat] : [{ type: '', action: '', dim1: 0, dim2: 0 }];
+      let totalCost = 0;
+      let hasAction = false;
+      let isKeep = false;
+
+      rows.forEach(row => {
+        if (!row.action || row.action === '') return;
+        if (row.action === 'Keep') { isKeep = true; return; }
+        hasAction = true;
+        let qty = needsDimensions(catDef.calc) ? calcQty(catDef.calc, rData.length, rData.width, ch) : (parseFloat(row.dim2) || 0);
+        totalCost += qty * getCost(catDef.cat, row.type, row.action, tier);
+      });
+      if (hasAction) isKeep = false;
+
+      let bodyHtml = '';
+      rows.forEach((row, ri) => {
+        const rowQty = needsDimensions(catDef.calc) ? calcQty(catDef.calc, rData.length, rData.width, ch) : (parseFloat(row.dim2) || 0);
+        const rowUc = getCost(catDef.cat, row.type, row.action, tier);
+        const rowTotal = (row.action && row.action !== 'Keep') ? rowQty * rowUc : 0;
+
+        const usedTypes = rows.filter((_, idx) => idx !== ri).map(r => r.type).filter(Boolean);
+        const availableTypes = catDef.types.filter(t => !usedTypes.includes(t));
+        const typeOptions = row.type && !availableTypes.includes(row.type)
+          ? [...availableTypes, row.type] : availableTypes;
+
+        bodyHtml += `<div class="multi-row" data-row-idx="${ri}">
+          <div class="multi-row-header">
+            <span class="multi-row-label">${row.type || 'New Item'}</span>
+            ${rows.length > 1 ? `<button class="multi-row-delete" onclick="event.stopPropagation();removeMultiRow('${escapedCat}',${ri})">&times;</button>` : ''}
           </div>
-          <div class="form-group">
-            <label>Condition</label>
-            <select data-field="condition" onchange="onCatChange(this)">
-              <option value="">-- Select --</option>
-              ${CONDITIONS.map(c => `<option value="${c}" ${item.condition === c ? 'selected' : ''}>${c}</option>`).join('')}
-            </select>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select data-field="type" onchange="onMultiRowChange(this)">
+                <option value="">-- Select --</option>
+                ${typeOptions.map(t => `<option value="${t}" ${row.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Action</label>
+              <select data-field="action" onchange="onMultiRowChange(this)">
+                <option value="">-- Select --</option>
+                ${ACTIONS.map(a => `<option value="${a}" ${row.action === a ? 'selected' : ''}>${a}</option>`).join('')}
+              </select>
+            </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Action</label>
-            <select data-field="action" onchange="onCatChange(this)">
-              <option value="">-- Select --</option>
-              ${ACTIONS.map(a => `<option value="${a}" ${item.action === a ? 'selected' : ''}>${a}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        ${!needsDimensions(catDef.calc) ? `
-        <div class="form-row">
-          ${labels.dim1 ? `<div class="form-group">
-            <label>${labels.dim1}</label>
-            <input type="number" data-field="dim1" value="${item.dim1 || ''}" inputmode="decimal" placeholder="0" onchange="onCatChange(this)">
+          ${catDef.calc === 'qty' ? `<div class="form-row">
+            <div class="form-group">
+              <label>Qty</label>
+              <input type="number" data-field="dim2" value="${row.dim2 || ''}" inputmode="numeric" placeholder="1" onchange="onMultiRowChange(this)">
+            </div>
+            ${rowTotal > 0 ? `<div class="multi-row-cost">${fmtMoney(rowTotal)}</div>` : ''}
           </div>` : ''}
-          ${labels.dim2 ? `<div class="form-group">
-            <label>${labels.dim2}</label>
-            <input type="number" data-field="dim2" value="${item.dim2 || ''}" inputmode="decimal" placeholder="0" onchange="onCatChange(this)">
+          ${catDef.calc === 'trim' && rowTotal > 0 ? `<div class="multi-row-cost-line">
+            <span>${fmt(rowQty)} lin ft &times; ${fmtMoney(rowUc)}</span>
+            <span class="multi-row-cost">${fmtMoney(rowTotal)}</span>
           </div>` : ''}
-        </div>` : ''}
-        ${totalCost > 0 ? `<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:var(--text-light)">
-          <span>${fmt(qty)} ${getCostUnit(catDef.cat, item.type, item.action)} &times; ${fmtMoney(unitCost)}</span>
-          <span style="font-weight:700;color:var(--green-dk)">${fmtMoney(totalCost)}</span>
-        </div>` : ''}
-      </div>
-    </div>`;
+        </div>`;
+      });
+
+      const allUsedTypes = rows.map(r => r.type).filter(Boolean);
+      const remainingTypes = catDef.types.filter(t => !allUsedTypes.includes(t));
+      if (remainingTypes.length > 0) {
+        bodyHtml += `<button class="add-row-btn" onclick="addMultiRow('${escapedCat}')">+ Add Type</button>`;
+      }
+
+      html += `<div class="cat-card ${isOpen ? 'open' : ''}" data-cat="${catDef.cat}" data-idx="${ci}">
+        <div class="cat-header ${hasAction ? 'has-action' : ''} ${isKeep ? 'keep-action' : ''}" onclick="toggleCard(this)">
+          <span class="cat-name">${catDef.cat}</span>
+          <button class="quick-keep" onclick="event.stopPropagation();quickKeep('${escapedCat}')">Keep &#10003;</button>
+          <span class="cat-cost">${totalCost > 0 ? fmtMoney(totalCost) : (isKeep ? 'Keep' : '')}</span>
+        </div>
+        <div class="cat-body">${bodyHtml}</div>
+      </div>`;
+
+    } else {
+      // ── SINGLE-ROW CARD (unchanged) ──
+      const item = (rData.items && rData.items[catDef.cat]) || {};
+      const hasAction = item.action && item.action !== 'Keep' && item.action !== '';
+      const isKeep = item.action === 'Keep';
+      let qty = 0;
+      if (needsDimensions(catDef.calc)) {
+        qty = calcQty(catDef.calc, rData.length, rData.width, ch);
+      } else if (catDef.calc === 'linft') {
+        qty = parseFloat(item.dim1) || 0;
+      } else {
+        qty = parseFloat(item.dim2) || (parseFloat(item.dim1) || 0);
+      }
+      const unitCost = getCost(catDef.cat, item.type, item.action, tier);
+      const totalCost = qty * unitCost;
+      const labels = dimLabels(catDef.calc);
+
+      html += `<div class="cat-card ${isOpen ? 'open' : ''}" data-cat="${catDef.cat}" data-idx="${ci}">
+        <div class="cat-header ${hasAction ? 'has-action' : ''} ${isKeep ? 'keep-action' : ''}" onclick="toggleCard(this)">
+          <span class="cat-name">${catDef.cat}</span>
+          <button class="quick-keep" onclick="event.stopPropagation();quickKeep('${escapedCat}')">Keep &#10003;</button>
+          <span class="cat-cost">${totalCost > 0 ? fmtMoney(totalCost) : (isKeep ? 'Keep' : '')}</span>
+        </div>
+        <div class="cat-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select data-field="type" onchange="onCatChange(this)">
+                <option value="">-- Select --</option>
+                ${catDef.types.map(t => `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Condition</label>
+              <select data-field="condition" onchange="onCatChange(this)">
+                <option value="">-- Select --</option>
+                ${CONDITIONS.map(c => `<option value="${c}" ${item.condition === c ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Action</label>
+              <select data-field="action" onchange="onCatChange(this)">
+                <option value="">-- Select --</option>
+                ${ACTIONS.map(a => `<option value="${a}" ${item.action === a ? 'selected' : ''}>${a}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          ${!needsDimensions(catDef.calc) ? `
+          <div class="form-row">
+            ${labels.dim1 ? `<div class="form-group">
+              <label>${labels.dim1}</label>
+              <input type="number" data-field="dim1" value="${item.dim1 || ''}" inputmode="decimal" placeholder="0" onchange="onCatChange(this)">
+            </div>` : ''}
+            ${labels.dim2 ? `<div class="form-group">
+              <label>${labels.dim2}</label>
+              <input type="number" data-field="dim2" value="${item.dim2 || ''}" inputmode="decimal" placeholder="0" onchange="onCatChange(this)">
+            </div>` : ''}
+          </div>` : ''}
+          ${totalCost > 0 ? `<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:var(--text-light)">
+            <span>${fmt(qty)} ${getCostUnit(catDef.cat, item.type, item.action)} &times; ${fmtMoney(unitCost)}</span>
+            <span style="font-weight:700;color:var(--green-dk)">${fmtMoney(totalCost)}</span>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }
   });
 
   // Room subtotal
@@ -360,8 +445,19 @@ function quickKeep(catName) {
   if (!currentProperty) return;
   const room = ROOMS[currentRoomIdx];
   const rData = currentProperty.rooms[room.name];
-  if (!rData.items[catName]) rData.items[catName] = {};
-  rData.items[catName].action = 'Keep';
+  const catDef = room.categories.find(c => c.cat === catName);
+
+  if (catDef && catDef.multiRow) {
+    const rows = rData.items[catName];
+    if (Array.isArray(rows) && rows.length > 0) {
+      rows.forEach(row => { row.action = 'Keep'; });
+    } else {
+      rData.items[catName] = [{ type: '', action: 'Keep', dim1: 0, dim2: 0 }];
+    }
+  } else {
+    if (!rData.items[catName]) rData.items[catName] = {};
+    rData.items[catName].action = 'Keep';
+  }
 
   renderRoom(currentRoomIdx);
   renderRoomPills();
@@ -454,6 +550,75 @@ function saveCurrentRoom() {
   // Data is already saved in onCatChange/onRoomDimChange
 }
 
+// ── MULTI-ROW FUNCTIONS ──
+function addMultiRow(catName) {
+  if (!currentProperty) return;
+  const room = ROOMS[currentRoomIdx];
+  const rData = currentProperty.rooms[room.name];
+  const rows = rData.items[catName];
+  if (!Array.isArray(rows)) return;
+
+  const catDef = room.categories.find(c => c.cat === catName);
+  const defaultDim2 = (catDef && catDef.calc === 'qty') ? 1 : 0;
+  rows.push({ type: '', action: '', dim1: 0, dim2: defaultDim2 });
+
+  const cardIdx = room.categories.findIndex(c => c.cat === catName);
+  renderRoom(currentRoomIdx, cardIdx);
+  renderRoomPills();
+  updateGrandTotal();
+  scheduleAutoSave();
+}
+
+function removeMultiRow(catName, rowIdx) {
+  if (!currentProperty) return;
+  const room = ROOMS[currentRoomIdx];
+  const rData = currentProperty.rooms[room.name];
+  const rows = rData.items[catName];
+  if (!Array.isArray(rows) || rows.length <= 1) return;
+
+  rows.splice(rowIdx, 1);
+
+  const cardIdx = room.categories.findIndex(c => c.cat === catName);
+  renderRoom(currentRoomIdx, cardIdx);
+  renderRoomPills();
+  updateGrandTotal();
+  scheduleAutoSave();
+}
+
+function onMultiRowChange(el) {
+  if (!currentProperty) return;
+  const card = el.closest('.cat-card');
+  const catName = card.dataset.cat;
+  const cardIdx = parseInt(card.dataset.idx);
+  const rowEl = el.closest('.multi-row');
+  const rowIdx = parseInt(rowEl.dataset.rowIdx);
+  const field = el.dataset.field;
+
+  const room = ROOMS[currentRoomIdx];
+  const rData = currentProperty.rooms[room.name];
+  const rows = rData.items[catName];
+  if (!Array.isArray(rows) || !rows[rowIdx]) return;
+
+  rows[rowIdx][field] = el.value;
+
+  // Auto-default qty to 1 for qty-based categories when action is set
+  const catDef = room.categories[cardIdx];
+  if (field === 'action' && el.value !== '' && el.value !== 'Keep' && catDef.calc === 'qty') {
+    if (!rows[rowIdx].dim2 || parseFloat(rows[rowIdx].dim2) === 0) {
+      rows[rowIdx].dim2 = 1;
+    }
+  }
+
+  // Re-render to update costs, but always keep this card open
+  if (field === 'action' || field === 'dim1' || field === 'dim2') {
+    renderRoom(currentRoomIdx, cardIdx);
+    renderRoomPills();
+    updateGrandTotal();
+  }
+  // Type changes: just save, no re-render
+  scheduleAutoSave();
+}
+
 // ── COST CALCULATIONS ──
 function calcRoomTotal(prop, roomName) {
   const rData = prop.rooms[roomName];
@@ -465,18 +630,31 @@ function calcRoomTotal(prop, roomName) {
 
   let total = 0;
   roomDef.categories.forEach(catDef => {
-    const item = rData.items[catDef.cat];
-    if (!item || !item.action || item.action === 'Keep') return;
-
-    let qty;
-    if (needsDimensions(catDef.calc)) {
-      qty = calcQty(catDef.calc, rData.length, rData.width, ch);
-    } else if (catDef.calc === 'linft') {
-      qty = parseFloat(item.dim1) || 0;
+    if (catDef.multiRow) {
+      const rows = Array.isArray(rData.items[catDef.cat]) ? rData.items[catDef.cat] : [];
+      rows.forEach(row => {
+        if (!row.action || row.action === 'Keep') return;
+        let qty;
+        if (needsDimensions(catDef.calc)) {
+          qty = calcQty(catDef.calc, rData.length, rData.width, ch);
+        } else {
+          qty = parseFloat(row.dim2) || (parseFloat(row.dim1) || 0);
+        }
+        total += qty * getCost(catDef.cat, row.type, row.action, tier);
+      });
     } else {
-      qty = parseFloat(item.dim2) || (parseFloat(item.dim1) || 0);
+      const item = rData.items[catDef.cat];
+      if (!item || !item.action || item.action === 'Keep') return;
+      let qty;
+      if (needsDimensions(catDef.calc)) {
+        qty = calcQty(catDef.calc, rData.length, rData.width, ch);
+      } else if (catDef.calc === 'linft') {
+        qty = parseFloat(item.dim1) || 0;
+      } else {
+        qty = parseFloat(item.dim2) || (parseFloat(item.dim1) || 0);
+      }
+      total += qty * getCost(catDef.cat, item.type, item.action, tier);
     }
-    total += qty * getCost(catDef.cat, item.type, item.action, tier);
   });
   return total;
 }

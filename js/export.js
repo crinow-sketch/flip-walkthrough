@@ -100,33 +100,64 @@ function exportPDF() {
 
     // Items
     roomDef.categories.forEach(catDef => {
-      const item = rData.items[catDef.cat];
-      if (!item || !item.action || item.action === 'Keep') return;
+      if (catDef.multiRow) {
+        // Multi-row category (Trim, Lights and Devices)
+        const rows = Array.isArray(rData.items[catDef.cat]) ? rData.items[catDef.cat] : [];
+        rows.forEach(row => {
+          if (!row.action || row.action === 'Keep') return;
+          let qty;
+          if (needsDimensions(catDef.calc)) {
+            qty = calcQty(catDef.calc, rData.length, rData.width, ch);
+          } else {
+            qty = parseFloat(row.dim2) || (parseFloat(row.dim1) || 0);
+          }
+          const uc = getCost(catDef.cat, row.type, row.action, tier);
+          const tc = qty * uc;
+          if (tc === 0) return;
 
-      let qty;
-      if (needsDimensions(catDef.calc)) {
-        qty = calcQty(catDef.calc, rData.length, rData.width, ch);
-      } else if (catDef.calc === 'linft') {
-        qty = parseFloat(item.dim1) || 0;
+          checkPage(6);
+          doc.setTextColor(...black);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.text(catDef.cat, margin + 2, y + 3.5);
+          doc.text(row.type || '', margin + 42, y + 3.5);
+          doc.text(row.action || '', margin + 72, y + 3.5);
+          doc.text(fmt(qty), margin + 100, y + 3.5);
+          doc.text(fmtMoney(uc), margin + 120, y + 3.5);
+          doc.setFont('helvetica', 'bold');
+          doc.text(fmtMoney(tc), margin + cw - 2, y + 3.5, { align: 'right' });
+          y += 5;
+        });
       } else {
-        qty = parseFloat(item.dim2) || (parseFloat(item.dim1) || 0);
-      }
-      const uc = getCost(catDef.cat, item.type, item.action, tier);
-      const tc = qty * uc;
-      if (tc === 0) return;
+        // Single-row category
+        const item = rData.items[catDef.cat];
+        if (!item || !item.action || item.action === 'Keep') return;
 
-      checkPage(6);
-      doc.setTextColor(...black);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text(catDef.cat, margin + 2, y + 3.5);
-      doc.text(item.type || '', margin + 42, y + 3.5);
-      doc.text(item.action || '', margin + 72, y + 3.5);
-      doc.text(fmt(qty), margin + 100, y + 3.5);
-      doc.text(fmtMoney(uc), margin + 120, y + 3.5);
-      doc.setFont('helvetica', 'bold');
-      doc.text(fmtMoney(tc), margin + cw - 2, y + 3.5, { align: 'right' });
-      y += 5;
+        let qty;
+        if (needsDimensions(catDef.calc)) {
+          qty = calcQty(catDef.calc, rData.length, rData.width, ch);
+        } else if (catDef.calc === 'linft') {
+          qty = parseFloat(item.dim1) || 0;
+        } else {
+          qty = parseFloat(item.dim2) || (parseFloat(item.dim1) || 0);
+        }
+        const uc = getCost(catDef.cat, item.type, item.action, tier);
+        const tc = qty * uc;
+        if (tc === 0) return;
+
+        checkPage(6);
+        doc.setTextColor(...black);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(catDef.cat, margin + 2, y + 3.5);
+        doc.text(item.type || '', margin + 42, y + 3.5);
+        doc.text(item.action || '', margin + 72, y + 3.5);
+        doc.text(fmt(qty), margin + 100, y + 3.5);
+        doc.text(fmtMoney(uc), margin + 120, y + 3.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(fmtMoney(tc), margin + cw - 2, y + 3.5, { align: 'right' });
+        y += 5;
+      }
     });
 
     y += 3;

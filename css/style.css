@@ -513,6 +513,70 @@ body {
   color: #fff;
 }
 
+/* ── MULTI-ROW (Trim, Lights & Devices) ── */
+.multi-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.multi-row:last-of-type { border-bottom: none; }
+.multi-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.multi-row-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+}
+.multi-row-delete {
+  background: none;
+  border: none;
+  color: var(--red);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.multi-row-delete:active { background: #fce4ec; }
+.multi-row-cost {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-dk);
+  display: flex;
+  align-items: center;
+  padding-top: 18px;
+  white-space: nowrap;
+}
+.multi-row-cost-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.multi-row-cost-line .multi-row-cost {
+  padding-top: 0;
+}
+.add-row-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background: none;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-row-btn:active { background: var(--light-blue); border-color: var(--blue); }
+
 /* ── RESPONSIVE ── */
 @media (min-width: 768px) {
   .screen { max-width: 600px; margin: 0 auto; }
