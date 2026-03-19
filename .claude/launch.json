@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "flip-app",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8085", "--directory", "C:/Users/crino/Desktop/flip-app"],
+      "port": 8085
+    }
+  ]
+}
