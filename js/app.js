@@ -567,6 +567,11 @@ function addMultiRow(catName) {
   renderRoomPills();
   updateGrandTotal();
   scheduleAutoSave();
+  // Scroll the open card into view after DOM rebuild
+  setTimeout(() => {
+    const card = document.querySelector(`.cat-card[data-idx="${cardIdx}"]`);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
 }
 
 function removeMultiRow(catName, rowIdx) {
